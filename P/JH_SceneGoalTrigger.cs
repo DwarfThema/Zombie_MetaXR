@@ -5,27 +5,54 @@ using UnityEngine.SceneManagement;
 
 public class JH_SceneGoalTrigger : MonoBehaviour
 {
-    public GameObject goalUi;
-    public GameObject semiUi;
-    public GameObject preUi;
+    [SerializeField] GameObject[] goalUi;
+    [SerializeField] GameObject[] semiUi;
+    [SerializeField] GameObject[] preUi;
+
+    Animator anim;
     private void Start() {
-        if(preUi){
-            preUi.SetActive(true);
-            
-            if(preUi.activeInHierarchy){
-                semiUi.SetActive(false);
+        if(preUi[1]){
+            anim = preUi[1].GetComponent<Animator>();
+        }else if(semiUi[1]){
+            anim = semiUi[1].GetComponent<Animator>();
+        }
+
+        if(preUi[0]){
+            preUi[0].SetActive(true);
+            preUi[1].SetActive(true);
+
+            if(preUi[0].activeInHierarchy){
+                semiUi[0].SetActive(false);
+                semiUi[1].SetActive(false);
             }else{
-                 semiUi.SetActive(true);
+                 semiUi[0].SetActive(true);
+                 semiUi[1].SetActive(true);
             }
         }
 
-        goalUi.SetActive(false);
+        goalUi[0].SetActive(false);
+        goalUi[1].SetActive(false);
     }
 
     private void OnTriggerEnter(Collider other) {
         if(other.CompareTag("Player")){
-        semiUi.SetActive(false);
-        goalUi.SetActive(true);
+
+
+        goalUi[0].SetActive(true);
+        goalUi[1].SetActive(true);
+
+        semiUi[0].SetActive(false);
+        anim.SetTrigger("clear");
+        if(semiUi[1]){
+            anim = semiUi[1].GetComponent<Animator>();
+            anim.SetTrigger("clear");
         }
+        StartCoroutine(screenMissionfalse());
+        }
+    }
+
+    IEnumerator screenMissionfalse(){
+        yield return new WaitForSeconds(1);
+        semiUi[1].SetActive(false);
     }
 }

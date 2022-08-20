@@ -21,7 +21,10 @@ public class JH_AttackMixer : MonoBehaviour
     private void OnTriggerEnter(Collider other) {
         if(other.gameObject.layer == 8){
             head = other.GetComponentInChildren<JH_isHeadHit>();
-            head.OnRaycastHeadHit(Vector3.up);
+
+            if(head){
+                head.OnRaycastHeadHit(new Vector3(0, 1, -3));
+            }
         }
     }
 }

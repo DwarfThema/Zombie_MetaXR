@@ -22,6 +22,7 @@ public class JH_AttackFlame : MonoBehaviour
         main = flame.main;
         sub = dust.main;
         flameCollider.enabled = false;
+
     }
 
     // Update is called once per frame
@@ -30,7 +31,8 @@ public class JH_AttackFlame : MonoBehaviour
         main.maxParticles = value;
         sub.maxParticles = value;
 
-        if(Input.GetButton("Fire1")){
+        if(gameObject.transform.Find("Player")){
+            if(Input.GetButton("Fire1")){
             if(value <= 1000){
                 value += 15;
             }
@@ -50,6 +52,9 @@ public class JH_AttackFlame : MonoBehaviour
         if(value >= 0){
             value -= 10;
         }
+        }
+
+
     }
 
     private void swapMode(){

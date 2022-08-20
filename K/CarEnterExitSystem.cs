@@ -10,6 +10,7 @@ public class CarEnterExitSystem : MonoBehaviour
 
     public Transform Player;
     public Transform Car;
+    public GameObject detact;
 
     [SerializeField] private CinemachineFreeLook carCam;
 
@@ -22,9 +23,9 @@ public class CarEnterExitSystem : MonoBehaviour
     
     void Start()
     {
+        detact.SetActive(false);
         Player = GameObject.FindGameObjectWithTag("Player").transform;
         carcontroller.enabled = false;
-        attackFlame.enabled = false;
         carCam.enabled = false;
     }
 
@@ -35,11 +36,12 @@ public class CarEnterExitSystem : MonoBehaviour
         {
             carCam.enabled = true;
             carcontroller.enabled = true;
-            attackFlame.enabled = true;
 
             driving = true;
             Player.transform.SetParent(Car);
             Player.gameObject.SetActive(false);
+
+            detact.SetActive(true);
         }
 
         else if(Input.GetKeyDown (KeyCode.E) && driving)
@@ -47,12 +49,12 @@ public class CarEnterExitSystem : MonoBehaviour
             candrive = false;
             carCam.enabled = false;
             carcontroller.enabled = false;
-            attackFlame.enabled = false;
 
             driving =false;
             Player.transform.SetParent(null);
-           Player.gameObject.SetActive(true);
+            Player.gameObject.SetActive(true);
             
+            detact.SetActive(false);
         }
         
     }

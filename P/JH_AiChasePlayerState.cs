@@ -15,6 +15,7 @@ public class JH_AiChasePlayerState : JH_AiState
     public void Enter(JH_AiAgent agent){
         
         randomAnim = Random.Range(0,20);
+        randomAnimSpeed = Random.Range(0.5f,1.5f);
     }
 
     public void Update(JH_AiAgent agent){
@@ -35,8 +36,6 @@ public class JH_AiChasePlayerState : JH_AiState
             agent.navMeshAgent.destination = agent.gameObject.transform.position;
         }
         
-        randomAnimSpeed = Random.Range(0.5f,1.5f);
-
         agent.anim.speed = randomAnimSpeed;
 
 

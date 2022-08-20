@@ -29,11 +29,22 @@ public class JH_AiAgent : MonoBehaviour
         stateMachine.RegisterState(new JH_AiIdleState());
         stateMachine.RegisterState(new JH_AiRoamingState());
 
-        float random = Random.Range(0,1);
+        int randomRotate = Random.Range(0,360);
+        gameObject.transform.rotation = Random.rotation;
+
+        int random = Random.Range(0,4);
         if(random == 1 ){
             stateMachine.ChangeState(initialState1);
+            if(initialState1 == AiStateId.ChasePlayer){
+                anim.SetTrigger("Detact");
+                stateMachine.ChangeState(AiStateId.ChasePlayer);
+            }
         }else{
             stateMachine.ChangeState(initialState2);
+            if(initialState1 == AiStateId.ChasePlayer){
+                anim.SetTrigger("Detact");
+                stateMachine.ChangeState(AiStateId.ChasePlayer);
+            }
         }
 
         

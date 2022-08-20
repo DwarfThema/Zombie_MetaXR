@@ -26,10 +26,14 @@ public class JH_AiRoamingState : JH_AiState
 
     GameObject playerTarget;
 
+    float randomAnimSpeed;
+
+    float playerDistance;
+
 
     public void Enter(JH_AiAgent agent){
         originPosition = agent.transform.position;
-        //agent.StartCoroutine("EnemyAI");
+        
         enemyAni = agent.anim;
         enemyTransform = agent.transform;
         nav = agent.navMeshAgent;
@@ -37,19 +41,22 @@ public class JH_AiRoamingState : JH_AiState
         speed_NonCombat = agent.config.roamingSpeed;
         moveRange = agent.config.roamingRange;
 
+        randomAnimSpeed = Random.Range(0.5f,1.5f);
+
         agent.navMeshAgent.SetDestination(target);
 
-        playerTarget = GameObject.FindGameObjectWithTag("Player");
+        playerTarget = GameObject.Find("Player");
         
     }
     void Move_NonCombat(){
-        if(targetDis <= 3){
+        if(targetDis <= 3f){
             onMove = false;
             nav.speed = speed_NonCombat;
         }
         if(!onMove){
             onMove = true;
             target = new Vector3(enemyTransform.position.x + Random.Range(-1 * moveRange, moveRange), 0, enemyTransform.position.z + Random.Range(-1 * moveRange, moveRange));
+            Debug.Log(target);
             nav.SetDestination(target);
         }
     if(originDis>=moveRange){
@@ -64,9 +71,12 @@ public class JH_AiRoamingState : JH_AiState
             originDis = (originPosition - enemyTransform.position).magnitude;
             targetDis = (target - enemyTransform.position).magnitude;
 
-            Move_NonCombat();
+            agent.anim.speed = randomAnimSpeed;
 
-            float playerDistance = Vector3.Distance(agent.transform.position, playerTarget.transform.position);
+            playerDistance = Vector3.Distance(playerTarget.transform.position, agent.transform.position);
+            Debug.Log(playerDistance);
+
+            Move_NonCombat();
 
             if(playerDistance <=  agent.config.maxSightDistance){
                 enemyAni.SetTrigger("Detact");

@@ -22,7 +22,6 @@ public class KeyItem : MonoBehaviour
     // Update is called once per framesssss
     void Update()
     {
-
         detectArea.transform.LookAt(target.transform.position);
     }
 

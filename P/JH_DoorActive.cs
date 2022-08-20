@@ -24,15 +24,9 @@ public class JH_DoorActive : MonoBehaviour
         if(isOpen){    
             anim.SetBool("isClose",false);
             col.enabled = false;
-            if(ui){
-            ui.SetActive(false);
-            }
         }else{    
             anim.SetBool("isClose",true);
             col.enabled = true;
-            if(ui){
-            ui.SetActive(true);
-            }
         }
     }
 }
