@@ -56,7 +56,7 @@ public class JH_AttackFlame : MonoBehaviour
 
 
     }
-
+    
     private void swapMode(){
         var shape = flame.shape;
             bigMode = !bigMode;

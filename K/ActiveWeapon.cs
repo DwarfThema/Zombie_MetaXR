@@ -1,7 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor.Animations;
+
 
 
 public class ActiveWeapon : MonoBehaviour
@@ -11,30 +12,29 @@ public class ActiveWeapon : MonoBehaviour
         Primary = 0,
         Secondary = 1
     }
-
+    public Animator rigController;
     public Transform[] weaponSlots;
     public bool isChangingWeapon;
 
     RayCastWeapon1[] equipped_weapon = new RayCastWeapon1[2];
     public CharacterAiming characterAiming;
-    AmmoWidget ammoWidget;
+    public PlayerUI ammoWidget;
     public Transform crossHairTarget;
-    //ReloadWeapon reload;
 
-    //int activeWeaponIndex = -1;
-    int activeWeaponIndex;
+
+    [System.NonSerialized] public int activeWeaponIndex = -1;
+    //int activeWeaponIndex;
     //빈게임 오브젝트, 무기가 들어가는 하이어러키 슬롯
     bool isHolstered = false;
 
     
-    public Transform weaponParent;
-    public Transform weaponLeftGrip;
-    public Transform weaponRightGrip;
-    public Animator rigController;
-    
 
     
-   
+
+    [Header("Reload")]
+    public WeaponAnimationEvents animationEvents;
+
+
 
 
 
@@ -49,9 +49,9 @@ public class ActiveWeapon : MonoBehaviour
     private void Awake()
     {
         //crossHairTarget = Camera.main.transform.Find("CrossHairTarget");
-        //ammoWidget = FindObjectOfType<AmmoWidget>;
+        ammoWidget = FindObjectOfType<PlayerUI>();
         characterAiming = GetComponent<CharacterAiming>();
-        //reload = GetComponent<ReloadWeapon>();
+        
     }
     void Start()
     {
@@ -59,29 +59,190 @@ public class ActiveWeapon : MonoBehaviour
         rigController.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
         rigController.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         rigController.updateMode = AnimatorUpdateMode.Normal;
+        animationEvents.WeaponAnimationEvent.AddListener(OnAnimationEvent);
+        EquipFirstWeapon();
         //태어날때 보유중인 무기가 있는지 탐색, 
-        RayCastWeapon1 existingWeapon = GetComponentInChildren<RayCastWeapon1>();
-        //보유중인 무기가 있을경우
-        if (existingWeapon)
-        {   //보유중인무기 착용
-            Equip(existingWeapon);
-        }
-    }
-
-    private void OnEnable()
-    {
-        rigController.updateMode = AnimatorUpdateMode.AnimatePhysics;
-        rigController.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
-        rigController.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-        rigController.updateMode = AnimatorUpdateMode.Normal;
-
-
+        //RayCastWeapon1 existingWeapon = GetComponentInChildren<RayCastWeapon1>();
+        ////보유중인 무기가 있을경우
+        //if (existingWeapon)
+        //{   //보유중인무기 착용
+        //    Equip(existingWeapon);
+        //}
     }
     public bool IsFiring()
     {
         RayCastWeapon1 currentWeapon = GetActiveWeapon();
         if (!currentWeapon) return false;
         return currentWeapon.isFiring;
+    }
+
+
+    public bool isReloading = false;
+    void Update()
+    {
+        var weapon = GetWeaPon(activeWeaponIndex);
+        bool notSprinting = rigController.GetCurrentAnimatorStateInfo(2).shortNameHash == Animator.StringToHash("not_sprinting");
+
+        bool canFire = !isHolstered && notSprinting && !isReloading;// && !weapon.isFiring;
+        //print(activeWeaponIndex);
+        if (weapon)
+        {
+
+            if (Input.GetButton("Fire1") &&  canFire)
+            {
+                weapon.StartFiring();
+            }
+            if (Input.GetButtonUp("Fire1") || !canFire)
+            {
+                weapon.StopFiring();
+            }
+
+            if (Input.GetKeyDown(KeyCode.R) || weapon.ShouldReload())
+            {
+                isReloading = true;
+                rigController.SetTrigger("reload_weapon");
+            }
+
+            weapon.UpdateWeapon(Time.deltaTime, crossHairTarget.position);
+
+           
+            ammoWidget.Refresh(weapon.ammoCount, weapon.clipCount, activeWeaponIndex, weapon.uninfinitybullet);
+
+            
+            if (Input.GetKeyDown(KeyCode.X) && canFire)
+            {
+                ToggleActiveWeapon();
+
+            }
+        }
+
+        var weapon1 = GetWeaPon(0);
+        var weapon2 = GetWeaPon(1);
+        if (Input.GetKeyDown(KeyCode.Alpha2) && weapon1)
+        {
+           
+            SetActiveWeapon(WeaponSlot.Primary);
+            
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha3) && weapon2)
+        {
+            SetActiveWeapon(WeaponSlot.Secondary);
+            
+        }
+
+        DownGradePrimaryWeapon(weapon1);
+
+    }
+
+    #region 장전
+    void OnAnimationEvent(string eventName)
+    {
+        
+        switch (eventName)
+        {
+            case "detach_magazine":
+                DetachMagazine();
+                break;
+            case "drop_magazine":
+                DropMagazine();
+                break;
+            case "refill_magazine":
+                RefillMagazine();
+                break;
+            case "attach_magazine":
+                AttachMagazine();
+                break;
+        }
+        
+    }
+    public Transform leftHand;
+    GameObject magazineHand;
+    private void DetachMagazine()
+    {
+        RayCastWeapon1 weapon = GetActiveWeapon();
+        if(weapon.isMusinGun)
+        magazineHand = Instantiate(weapon.magazine, leftHand, true);
+        else magazineHand = Instantiate(weapon.magazine, leftHand, true);
+        weapon.magazine.SetActive(false);
+        weapon.ReloadSFX();
+    }
+
+    private void DropMagazine()
+    {
+        GameObject droppedMagazine = Instantiate(magazineHand, magazineHand.transform.position, magazineHand.transform.rotation);
+        droppedMagazine.AddComponent<Rigidbody>();
+        droppedMagazine.AddComponent<BoxCollider>();
+        magazineHand.SetActive(false);
+
+       
+    }
+    private void RefillMagazine()
+    {
+        magazineHand.SetActive(true);
+    }
+
+
+    private void AttachMagazine()
+    {
+        RayCastWeapon1 weapon = GetActiveWeapon();
+        weapon.magazine.SetActive(true);
+        Destroy(magazineHand);
+        weapon.RefillAmmo();
+        rigController.ResetTrigger("reload_weapon");
+        if(ammoWidget)
+        {
+            ammoWidget.Refresh(weapon.ammoCount, weapon.clipCount, activeWeaponIndex, weapon.uninfinitybullet);
+        }
+        isReloading = false;
+    }
+    #endregion
+
+
+    public RayCastWeapon1 BasicPrimaryweaponFab;
+    private void DownGradePrimaryWeapon(RayCastWeapon1 weapon1)
+    {
+        
+        if (weapon1)
+        {
+            if (weapon1.primaryWeaponUpGrade1)
+            {
+                ammoWidget.arrow2Slot.SetActive(true);
+                if (weapon1.clipCount <= 0 && weapon1.ammoCount <= 0)
+                {
+                    ammoWidget.arrow2Slot.SetActive(false);
+                    EquipFirstWeapon();
+                }
+            }
+            else ammoWidget.arrow2Slot.SetActive(false);
+        }
+    }
+
+    void EquipFirstWeapon()
+    {
+        if (BasicPrimaryweaponFab != null)
+        {
+            RayCastWeapon1 newWeapon = Instantiate(BasicPrimaryweaponFab);
+            Equip(newWeapon);
+        }
+    }    
+
+
+
+    private void OnEnable()
+    {   
+        
+        rigController.updateMode = AnimatorUpdateMode.AnimatePhysics;
+        rigController.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+        rigController.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        rigController.updateMode = AnimatorUpdateMode.Normal;
+        
+
+    }
+    private void OnDisable()
+    {
+        
+
     }
 
 
@@ -100,52 +261,7 @@ public class ActiveWeapon : MonoBehaviour
     }
 
 
-    void Update()
-    {
-        var weapon = GetWeaPon(activeWeaponIndex);
-        //bool notSprinting = rigController.GetCurrentAnimatorStateInfo(2).shortNameHash == Animator.StringToHash("not_sprint");
-        bool canFire = !isHolstered; //&& notSprinting; //&& !reload.isReloading;
-        if (weapon&&!isHolstered)
-        {
-            if (Input.GetButton("Fire1") && !weapon.isFiring/*&&canFire*/)
-            {
-                weapon.StartFiring();
-            }
-            if (Input.GetButtonUp("Fire1")/*||!canFire*/)
-            {
-                weapon.StopFiring();
-            }
-           
-
-            weapon.UpdateWeapon(Time.deltaTime, crossHairTarget.position);
-
-        }
-
-        if (Input.GetKeyDown(KeyCode.X))
-        {
-            bool isHolstered = rigController.GetBool("holster_weapon");
-            rigController.SetBool("holster_weapon", !isHolstered);
-
-        }
-
-
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            SetActiveWeapon(WeaponSlot.Primary);
-            //weaponSlots[0].gameObject.SetActive(true);
-            //weaponSlots[1].gameObject.SetActive(false);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            SetActiveWeapon(WeaponSlot.Secondary);
-            //weaponSlots[0].gameObject.SetActive(false);
-            //weaponSlots[1].gameObject.SetActive(true);
-        }
-
-
-
-    }
+    
         //무기 장착하는 함수,이 함수는 무기의 스크립트를 인자값으로 받는다.
         public void Equip(RayCastWeapon1 newWeapon)
         {
@@ -167,47 +283,60 @@ public class ActiveWeapon : MonoBehaviour
             weapon.recoil.rigController = rigController;
             weapon.transform.SetParent(weaponSlots[weaponSlotIndex], false);
             equipped_weapon[weaponSlotIndex] = weapon;
-            SetActiveWeapon(newWeapon.weaponSlot);
             
 
-
-            //if(ammoWidget)
-            //{
-            //    ammoWidget.Refresh(weapon.ammoCount, weapon.clipCount);
-            //}
-
+            SetActiveWeapon(newWeapon.weaponSlot);
 
         }
 
-
-
-
-
-    void ToggleActiveWeapon()
+    public void OnEnabeEquip()
     {
-        bool isHolstered = rigController.GetBool("holster_weapon");
-        if (isHolstered) StartCoroutine(ActivateWeapon(activeWeaponIndex));
-        else StartCoroutine(HolsterWeapon(activeWeaponIndex));
+
+        for (int i = 0; i < 2; i++)
+        {
+            var weapon = GetWeaPon(i);
+            if (weapon)
+            {
+                weapon.recoil.characterAiming = characterAiming;
+                weapon.recoil.rigController = rigController;
+                weapon.transform.SetParent(weaponSlots[i], false);
+                equipped_weapon[i] = weapon;
+            }
+
+        }
         
+    }
+
+
+
+    public bool canDrive = false;
+    public void ToggleActiveWeapon()
+    {   
+        ammoWidget.DeactiveSlotUI();
+        StartCoroutine(HolsterWeapon(activeWeaponIndex));
+        activeWeaponIndex = -1;
+        canDrive = true;
     }
     
 
 
-        void SetActiveWeapon(WeaponSlot weaponSlot)
+    void SetActiveWeapon(WeaponSlot weaponSlot)
     {
         int holsterIndex = activeWeaponIndex;
         int activateIndex = (int)weaponSlot;
+        
         if (holsterIndex == activateIndex || isChangingWeapon)
         {
-            //return;
-            holsterIndex = -1;
+            return;
+            
         }
         StartCoroutine(SwitchWeapon(holsterIndex, activateIndex));
+       
     }
 
-    IEnumerator SwitchWeapon(int holsterIndex, int activateIndex)
+    public IEnumerator SwitchWeapon(int holsterIndex, int activateIndex)
     {
-        //rigController.SetInteger("weapon_index", activateIndex);
+        rigController.SetInteger("weapon_index", activateIndex);
         yield return StartCoroutine(HolsterWeapon(holsterIndex));
         yield return StartCoroutine(ActivateWeapon(activateIndex));
         activeWeaponIndex = activateIndex;
@@ -228,26 +357,30 @@ public class ActiveWeapon : MonoBehaviour
             } while (rigController.GetCurrentAnimatorStateInfo(0).normalizedTime < 1.0f);
             
             isChangingWeapon = false;
-
+            
         }
+        
     }
 
-    IEnumerator ActivateWeapon(int index)
-    {
+    public IEnumerator ActivateWeapon(int index)
+    {   
         isChangingWeapon = true;
         var weapon = GetWeaPon(index);
         if (weapon)
         {
+            ammoWidget.ActiveSlotUI(index);
             rigController.SetBool("holster_weapon", false);
-            rigController.Play("equip_" + weapon.weaponName);
+            rigController.Play("weapon_" + weapon.weaponName+"_equip");
             do
             {
                 yield return new WaitForSeconds(0.05f);
             } while (rigController.GetCurrentAnimatorStateInfo(0).normalizedTime < 1.0f);
             
             isHolstered = false;
+            
         }
         isChangingWeapon = false;
+       
     }
 
     //public void DropWeapon()
@@ -262,15 +395,15 @@ public class ActiveWeapon : MonoBehaviour
     //    }
     //}
 
-    //public void RefillAmmo(int clipCount)
-    //{
-    //    var weapon = GetActiveWeapon();
-    //    if (weapon)
-    //    {
-    //        weapon.clipCount += clipCount;
-    //        ammoWidget.Refresh(weapon.ammoCount, weapon.clipCount);
-    //    }
-    //}
+    public void RefillAmmo(int clipCount)
+    {
+        var weapon = GetActiveWeapon();
+        if (weapon)
+        {
+            weapon.clipCount += clipCount;
+            ammoWidget.Refresh(weapon.ammoCount, weapon.clipCount, activeWeaponIndex, weapon.uninfinitybullet);
+        }
+    }
 
 
 }

@@ -2,16 +2,16 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using System;
+
 
 public class PlayerController : MonoBehaviour
 {
 
-    private  bool _rotateOnMove = false;
-
    
 
 
+
+    public Animator rigController;
     public float jumpHeight;
     public float gravity = -15.0f;
     public float stepDown;
@@ -19,11 +19,10 @@ public class PlayerController : MonoBehaviour
     public float jumpDamp;
     public float groundSpeed;
     public float pushPower = 2.0F;
-
+    
     Animator animator;
     private CharacterController cc;
     ActiveWeapon activeWeapon;
-    ReloadWeapon reloadWeapon;
     CharacterAiming characterAiming;
     [System.NonSerialized]public Vector2 inputVector;
 
@@ -33,13 +32,29 @@ public class PlayerController : MonoBehaviour
     int isSprintingParam = Animator.StringToHash("isSprinting");
 
 
+    [SerializeField] AudioClip[] audioClip;
+    private AudioSource audioSource;
+
+
     private void Awake()
     {
-
+        audioSource = GetComponent<AudioSource>();
         
 
     }
-    ShootController shootController;
+    
+    private void insideStep()
+    {
+        AudioClip clip = GetRandomClip(0,4);
+        audioSource.PlayOneShot(clip);
+
+    }
+
+    private AudioClip GetRandomClip(int a, int b)
+    {
+        int index = Random.Range(a, b);
+        return audioClip[index];
+    }
 
     private void Start()
     {
@@ -49,7 +64,7 @@ public class PlayerController : MonoBehaviour
         cc = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         activeWeapon = GetComponent<ActiveWeapon>();
-        reloadWeapon = GetComponent<ReloadWeapon>();
+        
         characterAiming = GetComponent<CharacterAiming>();
 
     }
@@ -75,10 +90,10 @@ public class PlayerController : MonoBehaviour
     {
         bool isSprinting = Input.GetKey(KeyCode.LeftShift);
         bool isFiring = activeWeapon.IsFiring();
-        //bool isReloading = reloadWeapon.isReloading;
+        bool isReloading = activeWeapon.isReloading;
         bool isChangingWeapon = activeWeapon.isChangingWeapon;
         bool isAiming = characterAiming.isAiming;
-        return isSprinting && !isFiring;//&& !isReloading && !isChangingWeapon;
+        return isSprinting && !isFiring&& !isReloading && !isChangingWeapon&&!isAiming;
 
     }
 
@@ -86,7 +101,7 @@ public class PlayerController : MonoBehaviour
     {
         bool isSprinting = IsSprinting();
         animator.SetBool(isSprintingParam, isSprinting);
-        //rigController.SetBool(isSprintingParam, isSprinting);
+        rigController.SetBool(isSprintingParam, isSprinting);
     }
 
     private void OnAnimatorMove()
@@ -187,24 +202,24 @@ public class PlayerController : MonoBehaviour
     //    inputVector.x = Input.GetAxis("Horizontal");
     //    inputVector.y = Input.GetAxis("Vertical");
     //    Vector3 currentHorizontalDir = new Vector3(inputVector.x, 0.0f, inputVector.y);
-        
+
 
 
     //    float inputMagnitude = inputVector.magnitude;
 
 
-        
+
 
 
 
 
     //    Vector3 inputDirection = new Vector3(inputVector.x, 0.0f, inputVector.y);
-        
+
 
     //    if (currentHorizontalDir != Vector3.zero)
     //    {
     //        _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + _mainCamera.eulerAngles.y; 
-                              
+
 
     //        float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
     //            RotationSmoothTime);
@@ -214,9 +229,9 @@ public class PlayerController : MonoBehaviour
     //        if (_rotateOnMove)
     //        {
     //            transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-                
+
     //        }
-        
+
 
     //    }
 
@@ -231,7 +246,7 @@ public class PlayerController : MonoBehaviour
 
     //}
 
-
+    bool _rotateOnMove;
 
     public void SetRotateOnMove(bool newRotateOnMove)
     {

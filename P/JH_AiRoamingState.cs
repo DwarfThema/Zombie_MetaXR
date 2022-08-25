@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
 public class JH_AiRoamingState : JH_AiState
 {
@@ -20,7 +21,6 @@ public class JH_AiRoamingState : JH_AiState
     Vector3 target;
     float targetDis;
 
-    Animator enemyAni;
     Transform enemyTransform;
     NavMeshAgent nav;
 
@@ -30,11 +30,14 @@ public class JH_AiRoamingState : JH_AiState
 
     float playerDistance;
 
+    Scene currentScene;
+    string sceneName;
+
 
     public void Enter(JH_AiAgent agent){
+        agent.LoopSFX(0);
         originPosition = agent.transform.position;
         
-        enemyAni = agent.anim;
         enemyTransform = agent.transform;
         nav = agent.navMeshAgent;
 
@@ -46,6 +49,10 @@ public class JH_AiRoamingState : JH_AiState
         agent.navMeshAgent.SetDestination(target);
 
         playerTarget = GameObject.Find("Player");
+
+        currentScene = SceneManager.GetActiveScene();
+        sceneName = currentScene.name;
+
         
     }
     void Move_NonCombat(){
@@ -56,7 +63,6 @@ public class JH_AiRoamingState : JH_AiState
         if(!onMove){
             onMove = true;
             target = new Vector3(enemyTransform.position.x + Random.Range(-1 * moveRange, moveRange), 0, enemyTransform.position.z + Random.Range(-1 * moveRange, moveRange));
-            Debug.Log(target);
             nav.SetDestination(target);
         }
     if(originDis>=moveRange){
@@ -74,18 +80,34 @@ public class JH_AiRoamingState : JH_AiState
             agent.anim.speed = randomAnimSpeed;
 
             playerDistance = Vector3.Distance(playerTarget.transform.position, agent.transform.position);
-            Debug.Log(playerDistance);
-
             Move_NonCombat();
 
-            if(playerDistance <=  agent.config.maxSightDistance){
-                enemyAni.SetTrigger("Detact");
+            float detactDistance;
+
+            if(sceneName == "5_detective_Lab"){
+                detactDistance = 7f;
+                agent.config.maxDistance = 7f;
+            }else if(sceneName == "1_opening"){
+                detactDistance = 1f;
+                agent.config.maxDistance = 1f;
+            }else{
+                detactDistance = 15f;
+                agent.config.maxDistance = 15f;
+            }
+            
+
+            if(playerDistance <= detactDistance){
+                agent.anim.SetTrigger("Detact");
                 agent.stateMachine.ChangeState(AiStateId.ChasePlayer);
             }
+
+
+
     }
 
     public void Exit(JH_AiAgent agent){
         
+        agent.StopLoopSFX(0);
     }
 }
 

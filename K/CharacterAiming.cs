@@ -49,6 +49,7 @@ public class CharacterAiming : MonoBehaviour
     {
         HandleAiming();
         HandleCamMode();
+        SetSensitivity();
         var weapon = activeWeapon.GetActiveWeapon();
         if(weapon)
         {
@@ -61,7 +62,7 @@ public class CharacterAiming : MonoBehaviour
     void FixedUpdate()
     {
         xAxis.Update(Time.fixedDeltaTime);
-        yAxis.Update(Time.fixedDeltaTime*sensitivity);
+        yAxis.Update(Time.fixedDeltaTime);
 
         cameraLookAt.eulerAngles = new Vector3(yAxis.Value, xAxis.Value, 0);
         camModeRoot.eulerAngles = new Vector3(yAxis.Value, xAxis.Value, 0);
@@ -173,7 +174,21 @@ public class CharacterAiming : MonoBehaviour
 
     }
 
-
+    void SetSensitivity()
+    {
+        if(Input.GetKeyDown(KeyCode.K))
+        {
+            normalSensitivity -= 10f;
+            firstSensitivity -= 10f;
+            aimSensitivity -= 10f;
+        }
+        if(Input.GetKeyDown(KeyCode.L))
+        {
+            normalSensitivity += 10f;
+            firstSensitivity += 10f;
+            aimSensitivity += 10f;
+        }
+    }
 
     public void SetSensitivity(float newSensitivity)
     {

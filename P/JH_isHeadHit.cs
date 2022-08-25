@@ -22,23 +22,22 @@ public class JH_isHeadHit : MonoBehaviour
     }
 
     public void OnRaycastHeadHit(Vector3 force) {
+        health.TakeDamage(30, force);
 
-        _animator.enabled = false;
-        Destroy(head);
-
-        findHead = Instantiate(replaceHead, transform.position, transform.rotation);
-
-        var rigidBodies = findHead.GetComponentsInChildren<Rigidbody>();
-
-        foreach(var rigidBody in rigidBodies){
-            rigidBody.AddExplosionForce(800, findHead.transform.position, 1000 );
-            rigidBody.AddForce(force * 18, ForceMode.VelocityChange);
+        if (health.currentHealth <= 0){
+            _animator.enabled = false;
+            Destroy(head);
+            findHead = Instantiate(replaceHead, transform.position, transform.rotation);
+            var rigidBodies = findHead.GetComponentsInChildren<Rigidbody>();
+            
+            foreach (var rigidBody in rigidBodies){
+                rigidBody.AddExplosionForce(800, findHead.transform.position, 1000 );
+                rigidBody.AddForce(force * 18, ForceMode.VelocityChange);
+            }
+            col.enabled = false;
         }
 
-        health.TakeDamage(health.maxHealth, force);
-
-        col.enabled = false;
-
+        
     }
 
 

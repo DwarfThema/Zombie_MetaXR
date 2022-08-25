@@ -6,8 +6,6 @@ using UnityEngine.AI;
 public class JH_AiAgent : MonoBehaviour
 {
     public JH_AiStateMachine stateMachine;
-    public AiStateId initialState1;
-    public AiStateId initialState2;
     public NavMeshAgent navMeshAgent;
     public JH_AiAgentConfig config;
     public JH_Ragdoll ragdoll;
@@ -15,37 +13,30 @@ public class JH_AiAgent : MonoBehaviour
     public Animator anim;
     public GameObject agentObject;
 
+    [SerializeField] AudioClip[] zombieAudioClip;
+    public AudioSource[] audioSource;
+
     // Start is called before the first frame update
     void Start()
     {
         agentObject = gameObject;
-        playerObject = GameObject.FindGameObjectWithTag("Player");
+        playerObject = GameObject.Find("Player");
+        if(!playerObject){
+            GameObject.Find("Car");
+        }
         ragdoll = GetComponent<JH_Ragdoll>();
         navMeshAgent = GetComponent<NavMeshAgent>();
         anim = GetComponent<Animator>();
         stateMachine = new JH_AiStateMachine(this);
         stateMachine.RegisterState(new JH_AiChasePlayerState());
         stateMachine.RegisterState(new JH_AiDeathState());
-        stateMachine.RegisterState(new JH_AiIdleState());
+        stateMachine.RegisterState(new JH_AiAttackState());
         stateMachine.RegisterState(new JH_AiRoamingState());
 
         int randomRotate = Random.Range(0,360);
         gameObject.transform.rotation = Random.rotation;
 
-        int random = Random.Range(0,4);
-        if(random == 1 ){
-            stateMachine.ChangeState(initialState1);
-            if(initialState1 == AiStateId.ChasePlayer){
-                anim.SetTrigger("Detact");
-                stateMachine.ChangeState(AiStateId.ChasePlayer);
-            }
-        }else{
-            stateMachine.ChangeState(initialState2);
-            if(initialState1 == AiStateId.ChasePlayer){
-                anim.SetTrigger("Detact");
-                stateMachine.ChangeState(AiStateId.ChasePlayer);
-            }
-        }
+        stateMachine.ChangeState(AiStateId.Roaming);
 
         
     }
@@ -55,4 +46,29 @@ public class JH_AiAgent : MonoBehaviour
     {
         stateMachine.Update();
     }
+
+    public void OneShotSFX(int index)
+    {
+
+        audioSource[0].PlayOneShot(zombieAudioClip[index]);
+
+    }
+    public float loopVolume = 0.5f;
+    public void LoopSFX(int index)
+    {
+
+        audioSource[1].clip = zombieAudioClip[index];
+        audioSource[1].loop = true;
+        audioSource[1].volume = loopVolume;
+        audioSource[1].Play();
+    }
+
+    public void StopLoopSFX(int index)
+    {
+
+        audioSource[1].clip = zombieAudioClip[index];
+        audioSource[1].Stop();
+    }
+
+
 }

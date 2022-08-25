@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ai_default_configuration
   m_EditorClassIdentifier: 
   maxTime: 1
-  maxDistance: 5
-  dieForce: 10
+  maxDistance: 15
+  dieForce: 5
   maxSightDistance: 15
   roamingRange: 4
   roamingSpeed: 0.2

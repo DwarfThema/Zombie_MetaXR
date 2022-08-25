@@ -14,8 +14,8 @@ public class CustomBullet : MonoBehaviour
     
     public GameObject explosion;
     public LayerMask whatIsEnemies;
+    public AudioSource explosionSFX;
 
-    
 
     //Damage
     public int explosionDamage;
@@ -34,7 +34,7 @@ public class CustomBullet : MonoBehaviour
     private void Start()
     {
         Setup();
-        
+        explosionSFX = GetComponent<AudioSource>();
     }
     bool isExploded;
     private void Update()
@@ -55,6 +55,7 @@ public class CustomBullet : MonoBehaviour
         //Instantiate explosion
        
         var impact =Instantiate(explosion, transform.position, Quaternion.identity) as GameObject;
+        explosionSFX.PlayOneShot(explosionSFX.clip);
         Destroy(impact, 2);
         //Check for enemies 
         //isExploded = true;
@@ -78,7 +79,7 @@ public class CustomBullet : MonoBehaviour
         }
 
         //Destroy(gameObject);
-        Invoke("Delay", 0.05f);
+        Invoke("Delay", 2f);
         
         //Add a little delay, just to make sure everything works fine
 

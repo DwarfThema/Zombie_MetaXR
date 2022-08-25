@@ -13,14 +13,12 @@ public class JH_AiChasePlayerState : JH_AiState
     }
 
     public void Enter(JH_AiAgent agent){
-        
+        agent.LoopSFX(1);
         randomAnim = Random.Range(0,20);
         randomAnimSpeed = Random.Range(0.5f,1.5f);
     }
 
     public void Update(JH_AiAgent agent){
-
-        
         if(agent.navMeshAgent.hasPath){
             agent.anim.SetFloat("Speed", agent.navMeshAgent.velocity.magnitude);
         }else{
@@ -36,24 +34,22 @@ public class JH_AiChasePlayerState : JH_AiState
             agent.navMeshAgent.destination = agent.gameObject.transform.position;
         }
         
-        agent.anim.speed = randomAnimSpeed;
+        agent.navMeshAgent.speed = 3.5f;
 
+        if(agent.playerObject){
+            agent.navMeshAgent.destination = agent.playerObject.transform.position;
 
-        if(randomAnim > 5){
-            agent.navMeshAgent.speed = 3.5f;
-        }else{
-            agent.navMeshAgent.speed = 0.4f;
-        }
-
-        if(timer < 0.0f){
-            if(agent.playerObject){
-                float sqrDistance = (agent.playerObject.transform.position - agent.navMeshAgent.destination).sqrMagnitude;
-                if(sqrDistance > agent.config.maxDistance * agent.config.maxDistance){
-                    agent.navMeshAgent.destination = agent.playerObject.transform.position;
-                }
+            /* float sqrDistance = (agent.playerObject.transform.position - agent.navMeshAgent.destination).sqrMagnitude;
+            if(sqrDistance > agent.config.maxDistance * agent.config.maxDistance){} */
             }
-            timer = agent.config.maxTime;
+        float playerDistance = Vector3.Distance(agent.playerObject.transform.position, agent.transform.position);
+
+        if(playerDistance <= agent.navMeshAgent.stoppingDistance){
+            agent.anim.SetTrigger("Attack");
+            agent.stateMachine.ChangeState(AiStateId.Attack);
         }
+
+
     }
 
     public void Exit(JH_AiAgent agent){

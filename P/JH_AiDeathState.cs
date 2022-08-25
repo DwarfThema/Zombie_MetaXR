@@ -11,10 +11,12 @@ public class JH_AiDeathState : JH_AiState
     }
 
     public void Enter(JH_AiAgent agent){
+        agent.StopLoopSFX(1);
+        agent.OneShotSFX(3);
         agent.ragdoll.ActivateRagdoll();
         direction.y = 1;
         agent.ragdoll.ApplyForce(direction * agent.config.dieForce);
-        
+        agent.navMeshAgent.enabled = false;
         
         GameObject.Destroy(agent.agentObject,5f);
     }
@@ -24,6 +26,6 @@ public class JH_AiDeathState : JH_AiState
     }
 
     public void Exit(JH_AiAgent agent){
-        
+        agent.StopLoopSFX(1);
     }
 }

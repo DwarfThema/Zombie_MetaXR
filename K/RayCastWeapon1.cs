@@ -27,40 +27,45 @@ public class RayCastWeapon1 : MonoBehaviour
     public ActiveWeapon.WeaponSlot weaponSlot;
     public bool isFiring = false;
     public int fireRate = 25;
-    public ParticleSystem[] muzzleFlash;
+
+    public GameObject magazine;
     public int ammoCount = 30;
     public int clipSize=30;
     public int clipCount=2;
+    public float damage = 10;
+    public WeaponRecoil recoil;
+    [SerializeField] private LayerMask shootColliderLayerMask = new LayerMask();
+    public bool uninfinitybullet;
 
-
-    
-
+    [Header("Effect")]
+    public ParticleSystem[] muzzleFlash;
     public Transform raycastOrigin;
-   
     public ParticleSystem hitEffect;
-
     public TrailRenderer tracerEffect1;
     public GameObject tracerSmoke;
 
-    
+    [Header("WeaponType")]
+    public bool primaryWeaponUpGrade1;
+    public bool isMusinGun;
     public string weaponName;
-    [SerializeField] private LayerMask shootColliderLayerMask = new LayerMask();
+
+    [Header("SFX")]
+    [SerializeField] AudioClip[] fireAudioClip;
+    [SerializeField] AudioClip reloadAudioClip;
+    private AudioSource audioSource;
+
+
 
 
 
     Ray ray;
     RaycastHit hitinfo;
     float accumulatedTime;
-    public float damage = 10;
-    public WeaponRecoil recoil;
-
-
-
-
 
     void Awake()
     {
         recoil =GetComponent<WeaponRecoil>();
+        audioSource = GetComponent<AudioSource>();
     }
     Vector3 GetPosition(Bullet bullet)
     {
@@ -82,10 +87,12 @@ public class RayCastWeapon1 : MonoBehaviour
         bullet.initialVelocity = velocity;
         //�ð� 0�ʷ� ����
         bullet.time = 0.0f;
-        //�Ѿ˿� ���� ����, �߻���ġ�� ����, 
+        //�Ѿ˿� ���� ����, �߻���ġ�� ����, wwwwwww
         bullet.tracer = Instantiate(tracerEffect1, position, Quaternion.identity);
         bullet.tracerSmoke = Instantiate(tracerSmoke,raycastOrigin.transform.position, Quaternion.identity);
         bullet.tracerSmoke.transform.forward = velocity;
+        if(bullet.tracerSmoke != null)
+        Destroy(bullet.tracerSmoke.gameObject, 2f);
 
         //ó����ġ���� �̵��� ��Ŵ
         bullet.tracer.AddPosition(position);
@@ -208,27 +215,27 @@ public class RayCastWeapon1 : MonoBehaviour
                 if(!primaryWeaponUpGrade1)
                 headBox.OnRaycastHeadHit(ray.direction);
             }
+            if (bullet.tracerSmoke != null && !primaryWeaponUpGrade1)
+                Destroy(bullet.tracerSmoke.gameObject);
         }
 
 
         //�Ѿ� ������ ��ġ�� ���̰� ���� ��ġ�� ������ �Ѵ�. trailrenderer�̱� ������ ������ �׷������̴�.
         if(bullet.tracer)
         bullet.tracer.transform.position = end;
-        Destroy(bullet.tracerSmoke.gameObject,1f);
 
+       
     }
-
-    public bool primaryWeaponUpGrade1;
-
+   
 
     
-    public bool isMusinGun;
+
     private void FireBullet(Vector3 target)
     {   
-        //if(ammoCount <=0) return;
+        if(ammoCount <=0) return;
 
-        //ammoCount--;
-
+        ammoCount--;
+        if(!isMusinGun) magazine.SetActive(false);
         //�ѱ� ����Ʈ ����.
         foreach (var particle in muzzleFlash)
         {
@@ -243,7 +250,7 @@ public class RayCastWeapon1 : MonoBehaviour
         var bullet = CreateBullet(raycastOrigin.position, velocity);
         //�Ҹ� ����Ʈ�� �Ҹ� �߰�.
         bullets.Add(bullet);
-
+        PlayFireSFX();
         recoil.GenerateRecoil(weaponName);
     }
 
@@ -253,20 +260,39 @@ public class RayCastWeapon1 : MonoBehaviour
         isFiring=false;
     }
 
-    //public bool ShouldReload()
-    //{
-    //    return ammoCount <= 0 && clipCount > 0;
-    //}
+    private void PlayFireSFX()
+    {
+        AudioClip clip = GetRandomClip();
+        audioSource.PlayOneShot(clip);
 
-    //public bool IsLowAmmo()
-    //{
-    //    return ammoCount == 0 && clipCount <= 0;
-    //}
-    //public void RefillAmmo()
-    //{
-    //    ammoCount = clipSize;
-    //    clipCount--;
-    //}
+    }
+    public void ReloadSFX()
+    {
+        AudioClip clip = reloadAudioClip;
+        audioSource.PlayOneShot(clip);
+
+    }
+    private AudioClip GetRandomClip()
+    {
+        int index = Random.Range(0, fireAudioClip.Length - 1);
+        return fireAudioClip[index];
+    }
+
+
+    public bool ShouldReload()
+    {
+        return ammoCount <= 0 && clipCount > 0;
+    }
+
+    public bool IsLowAmmo()
+    {
+        return ammoCount == 0 && clipCount <= 0;
+    }
+    public void RefillAmmo()
+    {
+        ammoCount = clipSize;
+        clipCount--;
+    }
 
 
 }
